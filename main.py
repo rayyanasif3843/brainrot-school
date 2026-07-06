@@ -18,9 +18,9 @@ ACCEPT_ROLES = [
 QUESTIONS = [
     "Why do you want to be a mod in Brainrot University? (3+ sentences)",
     "How old are you?",
-    "Do u got experience of being a mod?",
-    "If yes, which servers did u moderate?",
-    "Are you able to host giveaways and boost our server?",
+    "Do you have any experience of moderation?",
+    "2 members are fighting aggresively, and they are not listening to you. What would you do here?",
+    "What will you do if you see two staff members fighting?",
     "Will u get 800 weekly messages in ur first week?",
     "How are u gonna be a better moderator then others? (3+ sentences)",
     "Do u got anything else to say?"
