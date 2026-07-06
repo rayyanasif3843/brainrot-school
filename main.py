@@ -19,7 +19,7 @@ QUESTIONS = [
     "Why do you want to be a mod in Brainrot University? (3+ sentences)",
     "How old are you?",
     "Do you have any experience of moderation?",
-    "2 members are fighting aggresively, and they are not listening to you. What would you do here?",
+    "2 members are fighting aggressively, and they are not listening to you. What would you do here?",
     "What will you do if you see two staff members fighting?",
     "Will u get 800 weekly messages in ur first week?",
     "How are u gonna be a better moderator then others? (3+ sentences)",
@@ -38,73 +38,40 @@ bot = commands.Bot(
 PANEL_FILE = "panel.json"
 APPLICATION_FILE = "applications.json"
 
+
 # ================= FILE FUNCTIONS ================= #
 
 def load_panel():
-
     if not os.path.exists(PANEL_FILE):
-
         with open(PANEL_FILE, "w") as f:
-            json.dump(
-                {"enabled": True},
-                f
-            )
+            json.dump({"enabled": True}, f)
 
     with open(PANEL_FILE, "r") as f:
         return json.load(f)
 
 
 def save_panel(enabled):
-
     with open(PANEL_FILE, "w") as f:
-
-        json.dump(
-            {"enabled": enabled},
-            f
-        )
+        json.dump({"enabled": enabled}, f)
 
 
 def load_applications():
+    if not os.path.exists(APPLICATION_FILE):
+        with open(APPLICATION_FILE, "w") as f:
+            json.dump({}, f)
 
-    if not os.path.exists(
-        APPLICATION_FILE
-    ):
-
-        with open(
-            APPLICATION_FILE,
-            "w"
-        ) as f:
-
-            json.dump(
-                {},
-                f
-            )
-
-    with open(
-        APPLICATION_FILE,
-        "r"
-    ) as f:
-
+    with open(APPLICATION_FILE, "r") as f:
         return json.load(f)
 
 
 def save_applications(data):
+    with open(APPLICATION_FILE, "w") as f:
+        json.dump(data, f, indent=4)
 
-    with open(
-        APPLICATION_FILE,
-        "w"
-    ) as f:
-
-        json.dump(
-            data,
-            f,
-            indent=4
-        )
 
 # ================= EMBEDS ================= #
 
 def requirements_embed():
-
     embed = discord.Embed(
         title="📝 Staff Applications",
         color=0x58A6FF
@@ -118,48 +85,37 @@ def requirements_embed():
         "Select Staff Application below to apply."
     )
 
-    embed.set_author(
-        name="Staff Applications"
-    )
-
+    embed.set_author(name="Staff Applications")
     return embed
 
 
 def disabled_embed():
-
     return discord.Embed(
         title="❌ Applications Disabled",
-        description=(
-            "This panel has been "
-            "disabled by an administrator."
-        ),
+        description="This panel has been disabled by an administrator.",
         color=discord.Color.red()
     )
 
 
 def dm_closed_embed():
-
     return discord.Embed(
         title="❌ DMs Closed",
-        description=(
-            "Please enable your DMs "
-            "and try again."
-        ),
+        description="Please enable your DMs and try again.",
         color=discord.Color.red()
     )
 
 
 def started_embed():
-
     return discord.Embed(
         title="✅ Application Started",
         description="Check your DMs.",
         color=discord.Color.green()
     )
-  # ================= APPLICATION QUESTIONS ================= #
+
+
+# ================= APPLICATION QUESTIONS ================= #
 
 async def ask_question(user, question):
-
     embed = discord.Embed(
         title="📝 Staff Application",
         description=question,
@@ -171,73 +127,48 @@ async def ask_question(user, question):
     def check(message):
         return (
             message.author.id == user.id and
-            isinstance(
-                message.channel,
-                discord.DMChannel
-            )
+            isinstance(message.channel, discord.DMChannel)
         )
 
     try:
-
         msg = await bot.wait_for(
             "message",
             timeout=600,
             check=check
         )
-
         return msg.content
 
     except asyncio.TimeoutError:
         return None
 
 
-async def run_application(
-    interaction: discord.Interaction
-):
-
+async def run_application(interaction: discord.Interaction):
     answers = []
 
     for question in QUESTIONS:
-
-        answer = await ask_question(
-            interaction.user,
-            question
-        )
+        answer = await ask_question(interaction.user, question)
 
         if answer is None:
-
             embed = discord.Embed(
                 title="❌ Application Cancelled",
-                description=(
-                    "You took too long "
-                    "to answer."
-                ),
+                description="You took too long to answer.",
                 color=discord.Color.red()
             )
-
-            await interaction.user.send(
-                embed=embed
-            )
-
+            await interaction.user.send(embed=embed)
             return
 
         answers.append(answer)
 
     data = load_applications()
-
     data[str(interaction.user.id)] = {
         "user_id": interaction.user.id,
         "answers": answers,
         "status": "pending"
     }
-
     save_applications(data)
 
-    channel = bot.get_channel(
-        APPLICATION_CHANNEL_ID
-    )
-
-    if not channel:
+    channel = bot.get_channel(APPLICATION_CHANNEL_ID)
+    if channel is None:
         return
 
     application_embed = discord.Embed(
@@ -247,49 +178,37 @@ async def run_application(
 
     application_embed.add_field(
         name="Applicant",
-        value=(
-            f"{interaction.user.mention}\n"
-            f"ID: {interaction.user.id}"
-        ),
+        value=f"{interaction.user.mention}\nID: {interaction.user.id}",
         inline=False
     )
 
     for index, answer in enumerate(answers):
+        application_embed.add_field(
+            name=QUESTIONS[index],
+            value=answer,
+            inline=False
+        )
 
-    application_embed.add_field(
-        name=QUESTIONS[index],
-        value=answer,
-        inline=False
-    )
-
-    application_embed.set_footer(
-        text=f"Applicant ID: {interaction.user.id}"
-    )
+    application_embed.set_footer(text=f"Applicant ID: {interaction.user.id}")
 
     await channel.send(
-    embed=application_embed,
-    view=ReviewView(interaction.user.id)
-)
+        embed=application_embed,
+        view=ReviewView(interaction.user.id)
+    )
 
     success_embed = discord.Embed(
         title="✅ Application Submitted",
-        description=(
-            "Your application "
-            "has been submitted."
-        ),
+        description="Your application has been submitted.",
         color=discord.Color.green()
     )
 
-    await interaction.user.send(
-        embed=success_embed
-    )
+    await interaction.user.send(embed=success_embed)
+
 
 # ================= DROPDOWN ================= #
 
 class ApplicationSelect(Select):
-
     def __init__(self):
-
         options = [
             discord.SelectOption(
                 label="Staff Application",
@@ -299,50 +218,35 @@ class ApplicationSelect(Select):
         ]
 
         super().__init__(
-            placeholder=(
-                "Choose an application..."
-            ),
+            placeholder="Choose an application...",
             min_values=1,
             max_values=1,
             options=options
         )
 
-    async def callback(
-        self,
-        interaction: discord.Interaction
-    ):
-
+    async def callback(self, interaction: discord.Interaction):
         panel = load_panel()
 
         if not panel["enabled"]:
-
             await interaction.response.send_message(
                 embed=disabled_embed(),
                 ephemeral=True
             )
-
             return
 
         try:
-
             await interaction.user.send(
                 embed=discord.Embed(
                     title="📨 Staff Application",
-                    description=(
-                        "Your application "
-                        "will begin shortly."
-                    ),
+                    description="Your application will begin shortly.",
                     color=discord.Color.blurple()
                 )
             )
-
-        except:
-
+        except discord.Forbidden:
             await interaction.response.send_message(
                 embed=dm_closed_embed(),
                 ephemeral=True
             )
-
             return
 
         await interaction.response.send_message(
@@ -350,49 +254,37 @@ class ApplicationSelect(Select):
             ephemeral=True
         )
 
-        await run_application(
-            interaction
-        )
+        await run_application(interaction)
 
 
 class ApplicationView(View):
-
     def __init__(self):
+        super().__init__(timeout=None)
+        self.add_item(ApplicationSelect())
 
-        super().__init__(
-            timeout=None
-        )
 
-        self.add_item(
-            ApplicationSelect()
-        )
-      # ================= ACCEPT / DENY BUTTONS ================= #
+# ================= ACCEPT / DENY BUTTONS ================= #
 
 class AcceptButton(Button):
-
     def __init__(self, applicant_id):
-
         super().__init__(
             label="Accept",
             emoji="✅",
             style=discord.ButtonStyle.green
         )
-
         self.applicant_id = applicant_id
 
-    async def callback(
-        self,
-        interaction: discord.Interaction
-    ):
-
+    async def callback(self, interaction: discord.Interaction):
         guild = interaction.guild
+        if guild is None:
+            await interaction.response.send_message(
+                "This can only be used in a server.",
+                ephemeral=True
+            )
+            return
 
-        member = guild.get_member(
-            self.applicant_id
-        )
-
+        member = guild.get_member(self.applicant_id)
         if not member:
-
             await interaction.response.send_message(
                 "Applicant not found.",
                 ephemeral=True
@@ -400,56 +292,37 @@ class AcceptButton(Button):
             return
 
         for role_id in ACCEPT_ROLES:
-
             role = guild.get_role(role_id)
-
             if role:
-
                 try:
                     await member.add_roles(role)
-                except:
+                except discord.Forbidden:
                     pass
 
         try:
-
             await member.send(
                 embed=discord.Embed(
                     title="✅ Application Accepted",
-                    description=(
-                        f"You have been accepted in "
-                        f"**{guild.name}**."
-                    ),
+                    description=f"You have been accepted in **{guild.name}**.",
                     color=discord.Color.green()
                 )
             )
-
-        except:
+        except discord.Forbidden:
             pass
 
         embed = interaction.message.embeds[0]
-
         embed.color = discord.Color.green()
-
         embed.add_field(
             name="Result",
-            value=(
-                f"✅ Accepted by "
-                f"{interaction.user.mention}"
-            ),
+            value=f"✅ Accepted by {interaction.user.mention}",
             inline=False
         )
 
-        await interaction.message.edit(
-            embed=embed,
-            view=None
-        )
+        await interaction.message.edit(embed=embed, view=None)
 
         data = load_applications()
-
         if str(self.applicant_id) in data:
-
             data[str(self.applicant_id)]["status"] = "accepted"
-
             save_applications(data)
 
         await interaction.response.send_message(
@@ -459,71 +332,50 @@ class AcceptButton(Button):
 
 
 class DenyButton(Button):
-
     def __init__(self, applicant_id):
-
         super().__init__(
             label="Deny",
             emoji="❌",
             style=discord.ButtonStyle.red
         )
-
         self.applicant_id = applicant_id
 
-    async def callback(
-        self,
-        interaction: discord.Interaction
-    ):
-
+    async def callback(self, interaction: discord.Interaction):
         guild = interaction.guild
+        if guild is None:
+            await interaction.response.send_message(
+                "This can only be used in a server.",
+                ephemeral=True
+            )
+            return
 
-        member = guild.get_member(
-            self.applicant_id
-        )
+        member = guild.get_member(self.applicant_id)
 
         if member:
-
             try:
-
                 await member.send(
                     embed=discord.Embed(
                         title="❌ Application Denied",
-                        description=(
-                            f"Your application in "
-                            f"**{guild.name}** "
-                            f"was denied."
-                        ),
+                        description=f"Your application in **{guild.name}** was denied.",
                         color=discord.Color.red()
                     )
                 )
-
-            except:
+            except discord.Forbidden:
                 pass
 
         embed = interaction.message.embeds[0]
-
         embed.color = discord.Color.red()
-
         embed.add_field(
             name="Result",
-            value=(
-                f"❌ Denied by "
-                f"{interaction.user.mention}"
-            ),
+            value=f"❌ Denied by {interaction.user.mention}",
             inline=False
         )
 
-        await interaction.message.edit(
-            embed=embed,
-            view=None
-        )
+        await interaction.message.edit(embed=embed, view=None)
 
         data = load_applications()
-
         if str(self.applicant_id) in data:
-
             data[str(self.applicant_id)]["status"] = "denied"
-
             save_applications(data)
 
         await interaction.response.send_message(
@@ -533,27 +385,11 @@ class DenyButton(Button):
 
 
 class ReviewView(View):
+    def __init__(self, applicant_id):
+        super().__init__(timeout=None)
+        self.add_item(AcceptButton(applicant_id))
+        self.add_item(DenyButton(applicant_id))
 
-    def __init__(
-        self,
-        applicant_id
-    ):
-
-        super().__init__(
-            timeout=None
-        )
-
-        self.add_item(
-            AcceptButton(
-                applicant_id
-            )
-        )
-
-        self.add_item(
-            DenyButton(
-                applicant_id
-            )
-        )
 
 # ================= PANEL COMMANDS ================= #
 
@@ -561,18 +397,12 @@ class ReviewView(View):
     name="panel",
     description="Send application panel"
 )
-@app_commands.checks.has_permissions(
-    administrator=True
-)
-async def panel(
-    interaction: discord.Interaction
-):
-
+@app_commands.checks.has_permissions(administrator=True)
+async def panel(interaction: discord.Interaction):
     await interaction.channel.send(
         embed=requirements_embed(),
         view=ApplicationView()
     )
-
     await interaction.response.send_message(
         "✅ Panel sent.",
         ephemeral=True
@@ -583,21 +413,13 @@ async def panel(
     name="enablepanel",
     description="Enable applications"
 )
-@app_commands.checks.has_permissions(
-    administrator=True
-)
-async def enablepanel(
-    interaction: discord.Interaction
-):
-
+@app_commands.checks.has_permissions(administrator=True)
+async def enablepanel(interaction: discord.Interaction):
     save_panel(True)
-
     await interaction.response.send_message(
         embed=discord.Embed(
             title="✅ Panel Enabled",
-            description=(
-                "Applications are now open."
-            ),
+            description="Applications are now open.",
             color=discord.Color.green()
         )
     )
@@ -607,158 +429,171 @@ async def enablepanel(
     name="disablepanel",
     description="Disable applications"
 )
-@app_commands.checks.has_permissions(
-    administrator=True
-)
-async def disablepanel(
-    interaction: discord.Interaction
-):
-
+@app_commands.checks.has_permissions(administrator=True)
+async def disablepanel(interaction: discord.Interaction):
     save_panel(False)
-
     await interaction.response.send_message(
         embed=discord.Embed(
             title="❌ Panel Disabled",
-            description=(
-                "Applications are now closed."
-            ),
+            description="Applications are now closed.",
             color=discord.Color.red()
         )
     )
-  # ================= APPLICATION COMMANDS ================= #
 
-@app_commands.describe(
-    user="Applicant to accept"
-)
+
+# ================= APPLICATION COMMANDS ================= #
+
+@app_commands.describe(user="Applicant to accept")
 @bot.tree.command(
     name="accept_application",
     description="Accept an application"
 )
-@app_commands.checks.has_permissions(
-    administrator=True
-)
+@app_commands.checks.has_permissions(administrator=True)
 async def accept_application(
     interaction: discord.Interaction,
     user: discord.Member
 ):
-
     for role_id in ACCEPT_ROLES:
-
-        role = interaction.guild.get_role(
-            role_id
-        )
-
+        role = interaction.guild.get_role(role_id)
         if role:
             await user.add_roles(role)
 
     data = load_applications()
-
     if str(user.id) in data:
-
-        data[str(user.id)]["status"] = (
-            "accepted"
-        )
-
+        data[str(user.id)]["status"] = "accepted"
         save_applications(data)
 
     try:
-
         embed = discord.Embed(
             title="✅ Application Accepted",
-            description=(
-                f"You have been accepted in "
-                f"**{interaction.guild.name}**."
-            ),
+            description=f"You have been accepted in **{interaction.guild.name}**.",
             color=discord.Color.green()
         )
-
         await user.send(embed=embed)
-
-    except:
+    except discord.Forbidden:
         pass
 
     await interaction.response.send_message(
         embed=discord.Embed(
             title="✅ Accepted",
-            description=(
-                f"{user.mention} has been accepted."
-            ),
+            description=f"{user.mention} has been accepted.",
             color=discord.Color.green()
         )
     )
 
 
-@app_commands.describe(
-    user="Applicant to deny"
-)
+@app_commands.describe(user="Applicant to deny")
 @bot.tree.command(
     name="deny_application",
     description="Deny an application"
 )
-@app_commands.checks.has_permissions(
-    administrator=True
-)
+@app_commands.checks.has_permissions(administrator=True)
 async def deny_application(
     interaction: discord.Interaction,
     user: discord.Member
 ):
-
     data = load_applications()
-
     if str(user.id) in data:
-
-        data[str(user.id)]["status"] = (
-            "denied"
-        )
-
+        data[str(user.id)]["status"] = "denied"
         save_applications(data)
 
     try:
-
         embed = discord.Embed(
             title="❌ Application Denied",
-            description=(
-                f"Your application in "
-                f"**{interaction.guild.name}** "
-                f"was denied."
-            ),
+            description=f"Your application in **{interaction.guild.name}** was denied.",
             color=discord.Color.red()
         )
-
         await user.send(embed=embed)
-
-    except:
+    except discord.Forbidden:
         pass
 
     await interaction.response.send_message(
         embed=discord.Embed(
             title="❌ Denied",
-            description=(
-                f"{user.mention} has been denied."
-            ),
+            description=f"{user.mention} has been denied.",
             color=discord.Color.red()
         )
     )
+
 
 # ================= READY EVENT ================= #
 
 @bot.event
 async def on_ready():
-
     try:
         synced = await bot.tree.sync()
-
-        print(
-            f"Synced {len(synced)} slash commands."
-        )
-
+        print(f"Synced {len(synced)} slash commands.")
     except Exception as e:
         print(e)
 
-    print(
-        f"Logged in as {bot.user}"
-    )
+    print(f"Logged in as {bot.user}")
+
 
 # ================= RUN BOT ================= #
 
-bot.run(TOKEN)
+if TOKEN:
+    bot.run(TOKEN)
+else:
+    raise RuntimeError("DISCORD_TOKEN environment variable is not set.")
+```
+
+---
+
+## What Was Wrong
+
+### 1. Indentation error near `for index, answer in enumerate(answers):`
+This was the main syntax/runtime issue around the reported line.
+
+**Broken part:**
+```python
+for index, answer in enumerate(answers):
+
+application_embed.add_field(...)
+```
+
+The loop body was missing indentation, causing a syntax error.
+
+---
+
+### 2. `application_embed.send(...)` indentation was broken
+This part was also misindented:
+
+```python
+await channel.send(
+embed=application_embed,
+view=ReviewView(interaction.user.id)
+)
+```
+
+It needed proper indentation inside the call.
+
+---
+
+### 3. `started_embed()` section had a misplaced comment/indentation
+This line was oddly indented:
+
+```python
+  # ================= APPLICATION QUESTIONS ================= #
+```
+
+It could confuse readability and should be aligned properly.
+
+---
+
+### 4. DM checks used a broad `except:`
+The code used bare `except:` blocks, which is unsafe and hides real errors.
+
+I replaced the DM-related ones with `except discord.Forbidden`, which is the correct Discord.py exception for closed DMs.
+
+---
+
+### 5. Missing `TOKEN` safety check
+If `DISCORD_TOKEN` is missing, `bot.run(TOKEN)` would fail with a confusing error.
+
+I added:
+
+
+if TOKEN:
+    bot.run(TOKEN)
+else:
+    raise RuntimeError("DISCORD_TOKEN environment variable is not set.")
