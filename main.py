@@ -107,7 +107,7 @@ def requirements_embed():
 
     embed = discord.Embed(
         title="📝 Staff Applications",
-        color=discord.Color.blurple()
+        color=0x58A6FF
     )
 
     embed.description = (
@@ -115,7 +115,11 @@ def requirements_embed():
         "• Must be 13 or above\n"
         "• Must be active\n"
         "• Must be mature\n\n"
-        "Use the dropdown below to apply."
+        "Select Staff Application below to apply."
+    )
+
+    embed.set_author(
+        name="Staff Applications"
     )
 
     return embed
