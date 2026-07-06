@@ -263,8 +263,9 @@ async def run_application(
     )
 
     await channel.send(
-        embed=application_embed
-    )
+    embed=application_embed,
+    view=ReviewView(interaction.user.id)
+)
 
     success_embed = discord.Embed(
         title="✅ Application Submitted",
