@@ -16,7 +16,7 @@ ACCEPT_ROLES = [
 ]
 
 QUESTIONS = [
-    "Why do you want to be a mod in GladXBlox? (3+ sentences)",
+    "Why do you want to be a mod in Brainrot University? (3+ sentences)",
     "How old are you?",
     "Do u got experience of being a mod?",
     "If yes, which servers did u moderate?",
