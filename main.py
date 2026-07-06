@@ -256,11 +256,11 @@ async def run_application(
 
     for index, answer in enumerate(answers):
 
-        application_embed.add_field(
-            name=f"Question {index + 1}",
-            value=answer,
-            inline=False
-        )
+    application_embed.add_field(
+        name=QUESTIONS[index],
+        value=answer,
+        inline=False
+    )
 
     application_embed.set_footer(
         text=f"Applicant ID: {interaction.user.id}"
